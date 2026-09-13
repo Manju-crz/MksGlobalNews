@@ -1,0 +1,8 @@
+# Install Playwright
+pip install -r requirements.txt
+
+# Install Playwright browsers
+playwright install
+
+# Run BBC scraper
+python scrapers\BBC.py

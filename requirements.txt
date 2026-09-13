@@ -1,0 +1,10 @@
+playwright
+groq
+python-dotenv
+huggingface_hub
+google-generativeai
+sentence-transformers
+gTTS
+moviepy
+Pillow
+requests
