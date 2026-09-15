@@ -4,9 +4,24 @@ Driver.py - Main entry point for the MksGlobalNews scraper application
 
 import sys
 import os
+from filesystemUtil import JsonUtil
+from mediaGen.audioGenerator import generate_audio_for_article
+from mediaGen.picsGenerator import generate_image_for_article
+from mediaGen.videoGenerator import create_video
+from mediaGen.videosMerger import merge_videos
+from driverutil.audiofilesDurationUtil import (
+    format_duration,
+    get_audio_durations,
+    group_audio_files_by_duration,
+    resolve_ungrouped_audio_files,
+)
+
+# Shared project paths used by the pipeline methods.
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+DUMPS_FOLDER = os.path.join(PROJECT_ROOT, "dumps")
 
 # Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
 
 from scrapers.utils.NewsScraper import run_news_scraper
 from scripter.summarizer import process_and_transform_json
@@ -14,38 +29,34 @@ from scripter.similaritySegregator import compare_all_articles
 from scripter.conciser import group_paired_articles, consolidate_grouped_articles
 
 
-def main():
+def run_scraping_step():
     """
-    Main driver function to run the news scraper application
+    Run the scraper and return the generated raw JSON path.
     """
-
     # Run the news scraper
     # headless=False: Shows browser (set to True to run in background)
     # save_file=True: Saves results to JSON file
     # show_sample=True: Displays sample data in console
-
     news_data, json_filename = run_news_scraper(
-        headless=False,     # Change to True for headless mode
-        save_file=True,     # Change to False to skip saving
-        show_sample=True    # Change to False to skip sample output
+        headless=False,
+        save_file=True,
+        show_sample=True,
     )
-
-    # Extract just the filename (basename) from the full path
-    file_name = os.path.basename(json_filename)
-
+    base_file_name = os.path.basename(json_filename) if json_filename else None
     print(f"\nGenerated file (full path): {json_filename}")
-    print(f"File name only: {file_name}")
+    print(f"File name only: {base_file_name}")
+    return news_data, base_file_name, json_filename
 
+
+def process_And_Transform(json_filename):
     # Transform and summarize the scraped data
     print("\n" + "="*80)
     print("Starting transformation and summarization...")
     print("="*80)
 
-    # Create output filename for transformed data (ensure it's in project root dumps folder)
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    dumps_folder = os.path.join(project_root, 'dumps')
+    # Create output filename in the project dumps folder.
     base_filename = os.path.basename(json_filename)
-    output_file = os.path.join(dumps_folder, base_filename.replace('.json', '_transformed.json'))
+    output_file = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_transformed.json'))
 
     # Process and transform the JSON with summarization enabled
     process_and_transform_json(
@@ -53,38 +64,157 @@ def main():
         output_json_file=output_file,
         summarize=False  # Set to True to enable summarization
     )
+    return output_file
 
-    # Step 3: Compare articles for similarity and update pairedwith relationships
+
+def compare_Articles(output_file):
+    # Step 3: Compare every article pair and return pairs with at least 90% similarity.
+    # Example result: [("1", "4", 93.5)] = articles 1 and 4 are 93.5% similar.
     print("\n" + "="*80)
     print("Starting article similarity analysis...")
     print("="*80)
-
     comparison_results = compare_all_articles(json_file=output_file, similarity_threshold=90.0)
-
     if comparison_results:
         print(f"\n✅ Successfully compared {len(comparison_results)} article pairs!")
     else:
         print("\n⚠️ No similarity comparisons were made.")
+    return comparison_results
 
+
+def group_Articles(output_file, base_filename):
     # Step 4: Group, consolidate and refine articles
     print("\n" + "="*80)
     print("Starting article grouping, consolidation and refinement...")
     print("="*80)
-
-    # Group articles based on similarity (90% threshold)
+    # groups Stores similarity clusters, not article records themselves. For example, {"groups": [["1","4","9"]]}
+    # means article IDs 1, 4, and 9 were all considered duplicates/near-duplicates above the 90% similarity threshold,
+    # and the code keeps track of them as a single grouped set.
     groups = group_paired_articles(json_file=output_file, similarity_threshold=90.0)
-
     # Consolidate and refine all grouped articles
-    refined_output = os.path.join(dumps_folder, base_filename.replace('.json', '_refined.json'))
+    refined_output = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_refined.json'))
     refined_articles = consolidate_grouped_articles(groups=groups, input_file=output_file, output_file=refined_output)
+    return refined_output
+
+
+def collectArticals():
+    """
+    Main driver function to run the news scraper application
+    """
+    news_data, base_filename, json_filename = run_scraping_step()
+    output_file = process_And_Transform(json_filename)
+    #comparison_results = compare_Articles(output_file)
+    refined_file = group_Articles(output_file, base_filename)
 
     print("\n" + "="*80)
     print("All processing complete!")
     print(f"📄 Original file: {json_filename}")
     print(f"🔄 Transformed file: {output_file}")
-    print(f"✨ Refined file: {refined_output}")
+    print(f"✨ Refined file: {refined_file}")
     print("="*80)
+    return base_filename, refined_file
+
+
+def generate_media_for_articles(base_filename, refined_file):
+    refined_data = JsonUtil.read_json_content(refined_file)
+    if not refined_data:
+        print(f"No records found in refined file: {refined_file}")
+        return
+    base_name = os.path.splitext(base_filename)[0]
+    for record_number, record in refined_data.items():
+        article_text = record.get("article_content", "")
+        if not article_text:
+            print(f"Skipping record {record_number}: no article content found")
+            continue
+
+        output_name = f"{base_name}_{record_number}"
+        print(f"\nGenerating media for article {record_number}...")
+        image_path = generate_image_for_article(article_text, output_name)
+        audio_path = generate_audio_for_article(article_text, output_name)
+        print(f"Image file: {image_path}")
+        print(f"Audio file: {audio_path}")
+
+
+def groupAudioFilesDuration(base_filename):
+    audio_durations = get_audio_durations(base_filename)
+    print(f"Audio durations: {audio_durations}")
+
+    audio_groups, ungrouped_files = group_audio_files_by_duration(audio_durations)
+    audio_groups = resolve_ungrouped_audio_files(audio_groups, ungrouped_files)
+    grouped_audio_files = []
+    for group_number, (audio_group, total_duration) in enumerate(audio_groups, start=1):
+        print(
+            f"Group {group_number} "
+            f"(total: {format_duration(total_duration)}): {audio_group}"
+        )
+        grouped_audio_files.append({
+            f"Group{group_number}": list(audio_group.keys())
+        })
+
+    print(f"Grouped audio files: {grouped_audio_files}")
+    return grouped_audio_files
+
+
+def create_videos_for_audio_group(audio_group, refined_file):
+    """Create one video for every audio filename in a grouped audio dictionary."""
+    refined_data = JsonUtil.read_json_content(refined_file)
+    if not refined_data:
+        raise ValueError(f"No refined article data found in: {refined_file}")
+
+    audio_files = next(iter(audio_group.values()))
+    generated_videos = []
+
+    for audio_file in audio_files:
+        file_stem = os.path.splitext(audio_file)[0]
+        record_number = file_stem.rsplit("_", 1)[-1]
+        if not record_number.isdigit():
+            raise ValueError(f"Could not identify record number from: {audio_file}")
+
+        record = refined_data.get(record_number)
+        source = record.get("source") if record else None
+        if not source:
+            raise ValueError(
+                f"No source found for record {record_number} in: {refined_file}"
+            )
+
+        image_file = f"{file_stem}.png"
+        video_file = f"{file_stem}.mp4"
+        generated_videos.append(
+            create_video(
+                images=image_file,
+                audio=audio_file,
+                text=f"source:{source}",
+                output=video_file,
+            )
+        )
+
+    return generated_videos
+
+
+
+def main():
+    base_filename = "2026_09_14_01_06.json"
+    refined_file = "C:\\DATA\\VS_Code_Notes\\MksGlobalNews\\dumps\\2026_09_14_01_06_refined.json"
+    #base_filename, refined_file = collectArticals()
+    #generate_media_for_articles(base_filename, refined_file)
+    grouped_audio_files = groupAudioFilesDuration(base_filename)
+    first_audio_group = grouped_audio_files[0]
+    generated_videos = create_videos_for_audio_group(first_audio_group, refined_file=refined_file)
+    group_name = next(iter(first_audio_group))
+    base_name = os.path.splitext(base_filename)[0]
+    merger_video_filename = os.path.join(
+        DUMPS_FOLDER,
+        "generated_videos",
+        f"{base_name}_{group_name}.mp4",
+    )
+    merge_videos(generated_videos, merger_video_filename)
+    
+
+
+
+
 
 
 if __name__ == "__main__":
     main()
+
+

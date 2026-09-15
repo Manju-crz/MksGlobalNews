@@ -7,3 +7,6 @@ node_modules/
 package-lock.json
 *.log
 .DS_Store
+/dumps/generated_audios/
+/dumps/generated_images/
+/dumps/generated_videos/

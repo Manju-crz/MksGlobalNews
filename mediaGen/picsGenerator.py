@@ -1,5 +1,5 @@
 """
-PicsPicker - Image Generation Interface
+picsGenerator - Image Generation Interface
 Provides a user-friendly interface for generating images from text descriptions.
 Uses ImageGeneratorUtility for the core functionality.
 """
@@ -10,15 +10,40 @@ import time
 from dotenv import load_dotenv
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GENERATED_IMAGES_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_images")
+sys.path.insert(0, PROJECT_ROOT)
 
 from llmUtil.ImageGeneratorUtility import (
     generate_image_from_paragraph,
-    generate_image_from_article,
-    generate_images_batch
+    generate_image_from_article
 )
 
 load_dotenv()
+
+
+def generate_image_for_article(article_paragraph, file_name):
+    """Generate a PNG image for an article paragraph.
+
+    Args:
+        article_paragraph (str): Complete article text used as the image prompt.
+        file_name (str): Output filename without the ``.png`` extension.
+
+    Returns:
+        str: Path to the generated PNG file, or None if generation failed.
+    """
+    if not article_paragraph or not isinstance(article_paragraph, str):
+        raise ValueError("article_paragraph must be a non-empty string")
+    if not file_name or not isinstance(file_name, str):
+        raise ValueError("file_name must be a non-empty string")
+
+    os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
+    filename = file_name[:-4] if file_name.lower().endswith(".png") else file_name
+    return generate_image_from_paragraph(
+        article_paragraph,
+        output_dir=GENERATED_IMAGES_DIR,
+        filename=filename
+    )
 
 
 class PollinationsImageGenerator:
@@ -31,7 +56,7 @@ class PollinationsImageGenerator:
         """Initialize the Pollinations Image Generator."""
         pass
 
-    def generate_image_from_text(self, text_prompt, output_dir="generated_images", filename=None, width=1024, height=1024):
+    def generate_image_from_text(self, text_prompt, output_dir=GENERATED_IMAGES_DIR, filename=None, width=1024, height=1024):
         """
         Generate an image from a text description.
 
@@ -61,7 +86,7 @@ class PollinationsImageGenerator:
 
         return image_path
 
-    def generate_image_from_article(self, article_content, headline="", output_dir="generated_images", filename=None):
+    def generate_image_from_article(self, article_content, headline="", output_dir=GENERATED_IMAGES_DIR, filename=None):
         """
         Generate an image from an article.
 
@@ -115,7 +140,7 @@ class ImageGenerator:
         self.api_url = f"https://api-inference.huggingface.co/models/{model}"
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
 
-    def generate_image_from_text(self, text_prompt, output_dir="generated_images", filename=None):
+    def generate_image_from_text(self, text_prompt, output_dir=GENERATED_IMAGES_DIR, filename=None):
         """
         Generate an image from a text description.
 
@@ -181,7 +206,7 @@ class ImageGenerator:
             print(f"❌ Error generating image: {str(e)}")
             return None
 
-    def generate_image_from_article(self, article_content, headline="", output_dir="generated_images", filename=None):
+    def generate_image_from_article(self, article_content, headline="", output_dir=GENERATED_IMAGES_DIR, filename=None):
         """
         Generate an image from an article by creating a concise visual prompt.
 
@@ -215,7 +240,7 @@ class ImageGenerator:
         return self.generate_image_from_text(prompt, output_dir, filename)
 
 
-def generate_image_for_paragraph(paragraph, output_dir="generated_images", filename=None, use_pollinations=True):
+def generate_image_for_paragraph(paragraph, output_dir=GENERATED_IMAGES_DIR, filename=None, use_pollinations=True):
     """
     Convenience function to generate an image from a text paragraph.
 
@@ -236,83 +261,12 @@ def generate_image_for_paragraph(paragraph, output_dir="generated_images", filen
 
 
 if __name__ == "__main__":
-    # Example usage with current affairs topics
-    print("="*100)
-    print("IMAGE GENERATOR - PICSPICKER (Using Pollinations.AI)")
-    print("Current Affairs & News Examples")
-    print("="*100)
-
-    generator = PollinationsImageGenerator()
-
-    # Example 1: Political News
-    print("\n--- Example 1: Political News ---")
-    political_headline = "Kennedy Center board votes to add Trump's name to the facade of the performing arts building"
-    political_article = """
-WASHINGTON (AP) — The Kennedy Center board voted on Thursday to add President Donald Trump's
-name to the facade of the performing arts venue. The moves set up a test of U.S. District
-Judge Christopher Cooper, who ruled in May that letters affixed to the building were added
-illegally. During Trump's second term, the Kennedy Center has become an unlikely metaphor
-of presidential power.
-"""
-
-    image_path = generator.generate_image_from_article(
-        political_article,
-        political_headline,
-        filename="kennedy_center_political"
+    example_article = (
+        "The Kennedy Center board voted to add President Donald Trump's name "
+        "to the facade of the performing arts venue."
     )
-
-    # Wait to avoid rate limiting
-    print("\n⏳ Waiting 3 seconds to avoid rate limiting...")
-    time.sleep(3)
-
-    # Example 2: Sports News
-    print("\n--- Example 2: Sports News ---")
-    sports_headline = "WNBA condemns 'bad-faith' efforts to fuel transgender player debate"
-    sports_article = """
-The WNBA has issued a strong statement condemning what it calls 'bad-faith' efforts to
-create controversy around transgender athletes in women's basketball. The league emphasized
-its commitment to inclusivity while maintaining competitive integrity. Critics have slammed
-ex-NBA players' push to enter WNBA draft, calling it a publicity stunt.
-"""
-
-    image_path = generator.generate_image_from_article(
-        sports_article,
-        sports_headline,
-        filename="wnba_sports_news"
+    image_path = generate_image_for_article(
+        example_article,
+        "kennedy_center_political"
     )
-
-    # Wait to avoid rate limiting
-    print("\n⏳ Waiting 3 seconds to avoid rate limiting...")
-    time.sleep(3)
-
-    # Example 3: Technology & Business
-    print("\n--- Example 3: Technology & Business News ---")
-    tech_prompt = "Artificial intelligence data center, modern technology infrastructure, digital innovation, futuristic computing"
-    image_path = generator.generate_image_from_text(
-        tech_prompt,
-        filename="ai_technology_news"
-    )
-
-    # Wait to avoid rate limiting
-    print("\n⏳ Waiting 3 seconds to avoid rate limiting...")
-    time.sleep(3)
-
-    # Example 4: International Affairs
-    print("\n--- Example 4: International Affairs ---")
-    intl_headline = "Iran-backed Houthis clash with Yemeni forces and other Mideast developments"
-    intl_article = """
-Tensions escalated in the Middle East as Iran-backed Houthi forces engaged in clashes with
-Yemeni government troops. The conflict represents the latest development in the ongoing
-regional instability. International observers are monitoring the situation closely as it
-could have broader implications for Middle Eastern geopolitics.
-"""
-
-    image_path = generator.generate_image_from_article(
-        intl_article,
-        intl_headline,
-        filename="middle_east_conflict"
-    )
-
-    print("\n" + "="*100)
-    print("✅ Image generation examples complete!")
-    print("Check the 'generated_images' folder for your current affairs images!")
+    print(f"Generated image: {image_path}")

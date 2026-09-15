@@ -12,6 +12,11 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GENERATED_AUDIOS_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_audios")
+GENERATED_VIDEOS_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_videos")
+
 # Import our image generator
 from llmUtil.ImageGeneratorUtility import generate_image_from_paragraph
 
@@ -138,14 +143,24 @@ def generate_video_from_text(
 
     if output_path is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = f"generated_video_{timestamp}.mp4"
+        output_path = os.path.join(
+            GENERATED_VIDEOS_DIR,
+            f"generated_video_{timestamp}.mp4",
+        )
 
     temp_files = []
 
     try:
         # Step 1: Generate voiceover
         print("🔊 Generating voiceover...")
-        audio_path = generate_voiceover(text, language=language)
+        audio_path = generate_voiceover(
+            text,
+            output_path=os.path.join(
+                GENERATED_AUDIOS_DIR,
+                f"generated_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3",
+            ),
+            language=language,
+        )
 
         if not audio_path:
             print("❌ Failed to generate voiceover")

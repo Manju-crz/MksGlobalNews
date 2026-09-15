@@ -2,10 +2,10 @@
 Media generation tools for MksGlobalNews
 """
 
-from .AudioPicker import AudioPicker
-from .PicsPicker import PicsPicker
+from .audioGenerator import AudioGenerator
+from .picsGenerator import generate_image_for_article
 
 __all__ = [
-    'AudioPicker',
-    'PicsPicker'
+    'AudioGenerator',
+    'generate_image_for_article'
 ]

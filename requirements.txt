@@ -8,3 +8,7 @@ gTTS
 moviepy
 Pillow
 requests
+
+
+Pillow>=10.0.0
+moviepy

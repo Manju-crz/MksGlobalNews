@@ -10,6 +10,10 @@ from datetime import datetime
 import time
 
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GENERATED_AUDIOS_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_audios")
+
+
 def generate_audio_from_text(text, output_path=None, language='en', slow=False, speed=1.0):
     """
     Generate audio voiceover from text using Google Text-to-Speech (gTTS).
@@ -40,7 +44,10 @@ def generate_audio_from_text(text, output_path=None, language='en', slow=False, 
 
     if output_path is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = f"generated_audio_{timestamp}.mp3"
+        output_path = os.path.join(
+            GENERATED_AUDIOS_DIR,
+            f"generated_audio_{timestamp}.mp3",
+        )
 
     # Ensure .mp3 extension
     if not output_path.endswith('.mp3'):
@@ -134,7 +141,7 @@ def generate_audio_from_article(article_content, headline="", output_path=None,
     return generate_audio_from_text(voiceover_text, output_path, language, slow)
 
 
-def generate_audio_batch(articles, output_dir="generated_audio", language='en', delay=2):
+def generate_audio_batch(articles, output_dir=GENERATED_AUDIOS_DIR, language='en', delay=2):
     """
     Generate audio files for multiple articles.
 

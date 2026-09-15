@@ -13,8 +13,11 @@ import time
 
 load_dotenv()
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GENERATED_IMAGES_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_images")
 
-def generate_image_from_paragraph(paragraph, output_dir="generated_images", filename=None, width=1024, height=1024, timeout=60):
+
+def generate_image_from_paragraph(paragraph, output_dir=GENERATED_IMAGES_DIR, filename=None, width=1024, height=1024, timeout=60):
     """
     Generate an image from a text paragraph using Pollinations.AI.
 
@@ -23,7 +26,7 @@ def generate_image_from_paragraph(paragraph, output_dir="generated_images", file
 
     Args:
         paragraph (str): Text paragraph/description to generate image from
-        output_dir (str): Directory to save the generated image (default: "generated_images")
+        output_dir (str): Directory to save the generated image (default: dumps/generated_images)
         filename (str): Optional custom filename without extension (default: auto-generated timestamp)
         width (int): Image width in pixels (default: 1024)
         height (int): Image height in pixels (default: 1024)
@@ -35,7 +38,7 @@ def generate_image_from_paragraph(paragraph, output_dir="generated_images", file
     Example:
         >>> image_path = generate_image_from_paragraph("A sunset over mountains")
         >>> print(image_path)
-        'generated_images/generated_image_20260817_021500.png'
+        'dumps/generated_images/generated_image_20260817_021500.png'
     """
 
     # Create output directory if it doesn't exist
@@ -81,7 +84,7 @@ def generate_image_from_paragraph(paragraph, output_dir="generated_images", file
         return None
 
 
-def generate_image_huggingface(paragraph, output_dir="generated_images", filename=None, model="stabilityai/stable-diffusion-2-1", timeout=60):
+def generate_image_huggingface(paragraph, output_dir=GENERATED_IMAGES_DIR, filename=None, model="stabilityai/stable-diffusion-2-1", timeout=60):
     """
     Generate an image from a text paragraph using Hugging Face's Stable Diffusion API.
 
@@ -90,7 +93,7 @@ def generate_image_huggingface(paragraph, output_dir="generated_images", filenam
 
     Args:
         paragraph (str): Text paragraph/description to generate image from
-        output_dir (str): Directory to save the generated image (default: "generated_images")
+        output_dir (str): Directory to save the generated image (default: dumps/generated_images)
         filename (str): Optional custom filename without extension (default: auto-generated timestamp)
         model (str): Hugging Face model ID. Options:
             - "stabilityai/stable-diffusion-2-1" (default, high quality)
@@ -104,7 +107,7 @@ def generate_image_huggingface(paragraph, output_dir="generated_images", filenam
     Example:
         >>> image_path = generate_image_huggingface("A sunset over mountains")
         >>> print(image_path)
-        'generated_images/generated_image_20260817_021500.png'
+        'dumps/generated_images/generated_image_20260817_021500.png'
     """
 
     # Get API key from environment
@@ -170,7 +173,7 @@ def generate_image_huggingface(paragraph, output_dir="generated_images", filenam
         return None
 
 
-def generate_image_from_article(article_content, headline="", output_dir="generated_images", filename=None, width=1024, height=1024, use_huggingface=False):
+def generate_image_from_article(article_content, headline="", output_dir=GENERATED_IMAGES_DIR, filename=None, width=1024, height=1024, use_huggingface=False):
     """
     Generate an image from a news article by creating a concise visual prompt.
 
@@ -223,7 +226,7 @@ def generate_image_from_article(article_content, headline="", output_dir="genera
         return generate_image_from_paragraph(prompt, output_dir, filename, width, height)
 
 
-def generate_images_batch(paragraphs, output_dir="generated_images", delay=3):
+def generate_images_batch(paragraphs, output_dir=GENERATED_IMAGES_DIR, delay=3):
     """
     Generate multiple images from a list of paragraphs with delays to avoid rate limiting.
 

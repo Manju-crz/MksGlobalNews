@@ -129,7 +129,10 @@ MksGlobalNews/
 ├── dumps/                       # Scraped and processed JSON outputs
 ├── dateTimeUtil/                # Timestamp utilities
 ├── filesystemUtil/              # JSON and file helpers
-├── generated_images/            # Output media files
+├── dumps/                       # Scraped data and generated media outputs
+│   ├── generated_audios/
+│   ├── generated_images/
+│   └── generated_videos/
 ├── llmUtil/                     # AI/LLM utilities for summarization and media generation
 ├── mediaGen/                    # Media generation support modules
 ├── Reference Documents/         # Reference docs and internal notes
