@@ -4,7 +4,7 @@ Driver.py - Main entry point for the MksGlobalNews scraper application
 
 import sys
 import os
-from filesystemUtil import JsonUtil
+from util.filesystemUtil import JsonUtil
 from mediaGen.audioGenerator import generate_audio_for_article
 from mediaGen.picsGenerator import generate_image_for_article
 from mediaGen.videoGenerator import create_video
@@ -15,6 +15,7 @@ from driverutil.audiofilesDurationUtil import (
     group_audio_files_by_duration,
     resolve_ungrouped_audio_files,
 )
+from util.youtubeUtil.upload_video import upload_video
 
 # Shared project paths used by the pipeline methods.
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +26,6 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from scrapers.utils.NewsScraper import run_news_scraper
 from scripter.summarizer import process_and_transform_json
-from scripter.similaritySegregator import compare_all_articles
 from scripter.conciser import group_paired_articles, consolidate_grouped_articles
 
 
@@ -48,70 +48,53 @@ def run_scraping_step():
     return news_data, base_file_name, json_filename
 
 
-def process_And_Transform(json_filename):
-    # Transform and summarize the scraped data
-    print("\n" + "="*80)
-    print("Starting transformation and summarization...")
-    print("="*80)
-
-    # Create output filename in the project dumps folder.
-    base_filename = os.path.basename(json_filename)
-    output_file = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_transformed.json'))
-
-    # Process and transform the JSON with summarization enabled
-    process_and_transform_json(
-        input_json_file=json_filename,
-        output_json_file=output_file,
-        summarize=False  # Set to True to enable summarization
-    )
-    return output_file
-
-
-def compare_Articles(output_file):
-    # Step 3: Compare every article pair and return pairs with at least 90% similarity.
-    # Example result: [("1", "4", 93.5)] = articles 1 and 4 are 93.5% similar.
-    print("\n" + "="*80)
-    print("Starting article similarity analysis...")
-    print("="*80)
-    comparison_results = compare_all_articles(json_file=output_file, similarity_threshold=90.0)
-    if comparison_results:
-        print(f"\n✅ Successfully compared {len(comparison_results)} article pairs!")
-    else:
-        print("\n⚠️ No similarity comparisons were made.")
-    return comparison_results
-
-
 def group_Articles(output_file, base_filename):
     # Step 4: Group, consolidate and refine articles
     print("\n" + "="*80)
     print("Starting article grouping, consolidation and refinement...")
     print("="*80)
     # groups Stores similarity clusters, not article records themselves. For example, {"groups": [["1","4","9"]]}
-    # means article IDs 1, 4, and 9 were all considered duplicates/near-duplicates above the 90% similarity threshold,
+    # means article IDs 1, 4, and 9 were all considered duplicates/near-duplicates above the 80% similarity threshold,
     # and the code keeps track of them as a single grouped set.
-    groups = group_paired_articles(json_file=output_file, similarity_threshold=90.0)
+    groups = group_paired_articles(json_file=output_file, similarity_threshold=80.0)
     # Consolidate and refine all grouped articles
     refined_output = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_refined.json'))
     refined_articles = consolidate_grouped_articles(groups=groups, input_file=output_file, output_file=refined_output)
     return refined_output
 
 
-def collectArticals():
+def collectArticles():
     """
     Main driver function to run the news scraper application
     """
     news_data, base_filename, json_filename = run_scraping_step()
-    output_file = process_And_Transform(json_filename)
-    #comparison_results = compare_Articles(output_file)
-    refined_file = group_Articles(output_file, base_filename)
 
+    # Create output filename in the project dumps folder.
+    base_filename = os.path.basename(json_filename)
+    output_file = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_transformed.json'))
+    # Process and transform the JSON with summarization enabled
+    process_and_transform_json(
+        input_json_file=json_filename,
+        output_json_file=output_file
+    )
+    
+    # groups Stores similarity clusters, not article records themselves. For example, {"groups": [["1","4","9"]]}
+    # means article IDs 1, 4, and 9 were all considered duplicates/near-duplicates above the 80% similarity threshold,
+    # and the code keeps track of them as a single grouped set.
+    groups = group_paired_articles(json_file=output_file, similarity_threshold=80.0)
+    print(f"Groupped data: {groups}")
+    
+    # Consolidate and refine all grouped articles
+    refined_file = os.path.join(DUMPS_FOLDER, base_filename.replace('.json', '_refined.json'))
+    refined_articles = consolidate_grouped_articles(groups=groups, input_file=output_file, output_file=refined_file)
+    
     print("\n" + "="*80)
     print("All processing complete!")
     print(f"📄 Original file: {json_filename}")
     print(f"🔄 Transformed file: {output_file}")
     print(f"✨ Refined file: {refined_file}")
     print("="*80)
-    return base_filename, refined_file
+    return base_filename, refined_file, groups
 
 
 def generate_media_for_articles(base_filename, refined_file):
@@ -190,15 +173,39 @@ def create_videos_for_audio_group(audio_group, refined_file):
     return generated_videos
 
 
+def get_video_merger_files(base_filename, generated_videos, first_audio_group):
+    generated_video_count = len(generated_videos)
+    if generated_video_count > 0:
+        boundary_video_count = min(generated_video_count, 6)
+        welcome_video_path = os.path.abspath(
+            os.path.join(
+                PROJECT_ROOT,
+                "data",
+                f"Welcome_{boundary_video_count}.mp4",
+            )
+        )
+        wrap_up_video_path = os.path.abspath(
+            os.path.join(
+                PROJECT_ROOT,
+                "data",
+                f"WrapUp_{boundary_video_count}.mp4",
+            )
+        )
+        generated_videos.insert(0, welcome_video_path)
+        generated_videos.append(wrap_up_video_path)
 
-def main():
-    base_filename = "2026_09_14_01_06.json"
-    refined_file = "C:\\DATA\\VS_Code_Notes\\MksGlobalNews\\dumps\\2026_09_14_01_06_refined.json"
-    #base_filename, refined_file = collectArticals()
-    #generate_media_for_articles(base_filename, refined_file)
-    grouped_audio_files = groupAudioFilesDuration(base_filename)
-    first_audio_group = grouped_audio_files[0]
-    generated_videos = create_videos_for_audio_group(first_audio_group, refined_file=refined_file)
+    switch_over_path = os.path.abspath(
+        os.path.join(PROJECT_ROOT, "data", "SwitchOver.mp4")
+    )
+    if len(generated_videos) > 1:
+        generated_videos = [
+            item
+            for index, video_file in enumerate(generated_videos)
+            for item in (
+                [video_file]
+                + ([switch_over_path] if index < len(generated_videos) - 1 else [])
+            )
+        ]
     group_name = next(iter(first_audio_group))
     base_name = os.path.splitext(base_filename)[0]
     merger_video_filename = os.path.join(
@@ -206,8 +213,30 @@ def main():
         "generated_videos",
         f"{base_name}_{group_name}.mp4",
     )
+    print(f"Ready to generate videos: {generated_videos}")
+    print(f"merger_video_filename: {merger_video_filename}")
+    return merger_video_filename, generated_videos
+
+
+def main():
+    #base_filename = "2026_09_14_01_06.json"
+    #refined_file = "C:\\DATA\\VS_Code_Notes\\MksGlobalNews\\dumps\\2026_09_14_01_06_refined.json"
+    base_filename, refined_file, groups = collectArticles()
+    generate_media_for_articles(base_filename, refined_file)
+    grouped_audio_files = groupAudioFilesDuration(base_filename)
+    # Stores one group as {"Group1": [audio_filename, ...]}.
+    first_audio_group = grouped_audio_files[0]
+    generated_videos = create_videos_for_audio_group(first_audio_group, refined_file=refined_file)
+    merger_video_filename, generated_videos = get_video_merger_files(base_filename, generated_videos, first_audio_group)
     merge_videos(generated_videos, merger_video_filename)
-    
+    #result = upload_video(
+    #    video_file=merger_video_filename,
+    #    title="My News Video",
+    #    description="News video description",
+    #    tags=["news", "India News", "World News", "MksGlobalNews"],
+    #    category_id="25",
+    #    privacy_status="public",
+    #)
 
 
 

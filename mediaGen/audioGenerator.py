@@ -15,7 +15,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GENERATED_AUDIOS_DIR = os.path.join(PROJECT_ROOT, "dumps", "generated_audios")
 sys.path.insert(0, PROJECT_ROOT)
 
-from llmUtil.AudioGeneratorUtility import (
+from util.llmUtil.AudioGeneratorUtility import (
     generate_audio_from_text,
     generate_audio_from_article,
     generate_news_bulletin

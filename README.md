@@ -39,12 +39,7 @@ The real workflow is defined in `Driver.py`:
 }
 ```
 
-3. Compare articles for similarity
-   - Calls `compare_all_articles(...)` from `scripter/similaritySegregator.py`
-   - Uses a default similarity threshold of `90.0`
-   - Identifies article pairs above the threshold
-
-4. Group and consolidate related articles
+3. Group and consolidate related articles
    - Calls `group_paired_articles(...)` and `consolidate_grouped_articles(...)` from `scripter/conciser.py`
    - Groups similar articles together and writes a refined JSON output file
 
@@ -77,21 +72,11 @@ Then it creates an output file path in `dumps/` and runs:
 ```python
 process_and_transform_json(
     input_json_file=json_filename,
-    output_json_file=output_file,
-    summarize=False
+    output_json_file=output_file
 )
 ```
 
-After transformation it computes similarity:
-
-```python
-comparison_results = compare_all_articles(
-    json_file=output_file,
-    similarity_threshold=90.0
-)
-```
-
-Finally, it groups and consolidates the data:
+After transformation and summarization, it groups and consolidates the data:
 
 ```python
 groups = group_paired_articles(
@@ -113,7 +98,6 @@ refined_articles = consolidate_grouped_articles(
 Scrape sources
    -> raw JSON in dumps/
    -> flatten and normalize
-   -> compare article similarity
    -> group related articles
    -> write refined JSON
 ```
@@ -127,13 +111,15 @@ MksGlobalNews/
 ├── requirements.txt             # Python package dependencies
 ├── all_news_data.json           # Generic combined dataset file
 ├── dumps/                       # Scraped and processed JSON outputs
-├── dateTimeUtil/                # Timestamp utilities
-├── filesystemUtil/              # JSON and file helpers
+├── util/                        # Shared utility packages
+│   ├── dateTimeUtil/            # Timestamp utilities
+│   ├── filesystemUtil/          # JSON and file helpers
+│   ├── llmUtil/                 # AI/LLM utilities
+│   └── youtubeUtil/             # YouTube integration
 ├── dumps/                       # Scraped data and generated media outputs
 │   ├── generated_audios/
 │   ├── generated_images/
 │   └── generated_videos/
-├── llmUtil/                     # AI/LLM utilities for summarization and media generation
 ├── mediaGen/                    # Media generation support modules
 ├── Reference Documents/         # Reference docs and internal notes
 ├── scripter/                    # Transformation, comparison, grouping, and processing scripts
@@ -161,17 +147,8 @@ This module:
 
 - transforms grouped source data into a flat dictionary by article number
 - extracts only `headline`, `article_content`, and `source`
-- can optionally summarize articles with LLM/Ollama-like workflow
+- summarizes articles with the configured Groq model
 - writes results to a transformed JSON output
-
-### `scripter/similaritySegregator.py`
-
-This module:
-
-- loads the transformed JSON
-- compares every article pair
-- calculates similarity using `calculate_similarity(...)`
-- reports article pairs above a configured threshold
 
 ### `scripter/conciser.py`
 

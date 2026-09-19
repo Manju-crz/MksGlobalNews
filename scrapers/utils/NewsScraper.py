@@ -1,12 +1,12 @@
 import sys
 import os
 
-# Add parent directory to path to import from filesystemUtil
+# Add parent directory to path to import from util packages
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from finders import scrape_bbc, scrape_guardian, scrape_dw, scrape_cbc, scrape_apnews
-from filesystemUtil.file_utils import FileUtils
-from dateTimeUtil.date_time_util import DateTimeUtil
+from util.filesystemUtil.file_utils import FileUtils
+from util.dateTimeUtil.date_time_util import DateTimeUtil
 import time
 
 

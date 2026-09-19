@@ -4,10 +4,10 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from filesystemUtil import JsonUtil
+from util.filesystemUtil import JsonUtil
 
 
-def group_paired_articles(json_file, similarity_threshold=90.0):
+def group_paired_articles(json_file, similarity_threshold=80.0):
     """
     Group articles based on similarity threshold.
 
@@ -26,7 +26,7 @@ def group_paired_articles(json_file, similarity_threshold=90.0):
             return {}
 
         # Group articles by similarity
-        from llmUtil import calculate_similarity
+        from util.llmUtil import calculate_similarity
 
         article_ids = list(data.keys())
         groups = []
@@ -90,8 +90,10 @@ def consolidate_grouped_articles(groups, input_file, output_file):
             print(f"Error reading input file: {input_file}")
             return {}
 
+        #TODO: Implement actual consolidation logic based on groups
         # For now, just copy the data to the output file
         # In a full implementation, this would merge similar articles
+        
         refined_data = data
 
         # Save to output file

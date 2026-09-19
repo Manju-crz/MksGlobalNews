@@ -4,113 +4,143 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from filesystemUtil import JsonUtil, FileUtils
-from llmUtil import summarize_article_with_groq
+from util.filesystemUtil import JsonUtil, FileUtils
+from util.llmUtil.summarizerUtil import summarize_article_with_groq
 
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+# Groq model to use for summarization
+GROQ_MODEL = "llama-3.3-70b-versatile"
+
+
+# ============================================================
+# TRANSFORM NEWS DATA
+# ============================================================
 
 def transform_news_data(input_json_file, output_json_file=None):
     """
     Transform news data from source-grouped format to flat numbered format.
 
     Converts from:
+
     {
         "bbc": {
-            "bbc_card_1": {"headline": "...", "description": "...", "article_content": "...", ...},
-            "bbc_card_2": {...}
+            "bbc_card_1": {
+                "headline": "...",
+                "description": "...",
+                "article_content": "...",
+                ...
+            }
         },
-        "guardian": {...}
+        "guardian": {
+            ...
+        }
     }
 
     To:
+
     {
-        "1": {"headline": "...", "article_content": "...", "source": "bbc"},
-        "2": {"headline": "...", "article_content": "...", "source": "bbc"},
-        "3": {"headline": "...", "article_content": "...", "source": "guardian"}
+        "1": {
+            "headline": "...",
+            "article_content": "...",
+            "source": "bbc"
+        },
+        "2": {
+            "headline": "...",
+            "article_content": "...",
+            "source": "guardian"
+        }
     }
 
     Args:
-        input_json_file (str): Path to the input JSON file
-        output_json_file (str): Path to save the transformed JSON (optional)
-                               If None, overwrites the input file
+        input_json_file (str): Path to input JSON file
+        output_json_file (str): Path to output JSON file
 
     Returns:
         dict: Transformed news data
-
-    Examples:
-        # Transform and save to new file
-        transformed = transform_news_data('dumps/2026_08_14_00_56.json', 'dumps/transformed.json')
-
-        # Transform and overwrite original file
-        transformed = transform_news_data('dumps/2026_08_14_00_56.json')
     """
+
     try:
-        # Read the original JSON file
         print(f"Reading JSON file: {input_json_file}")
+
         original_data = JsonUtil.read_json_content(input_json_file)
 
         if not original_data:
-            print("Failed to read JSON file or file is empty")
+            print("Failed to read JSON file or file is empty.")
             return None
 
-        # Transform the data
         transformed_data = {}
         counter = 1
 
-        # Iterate through each source (bbc, guardian, dw, cbc, apnews)
         for source_name, articles in original_data.items():
-            print(f"Processing {source_name}: {len(articles)} articles")
 
-            # Iterate through each article in the source
+            print(
+                f"Processing source: {source_name} "
+                f"({len(articles)} articles)"
+            )
+
             for article_key, article_data in articles.items():
-                # Extract only headline and article_content
+
                 transformed_article = {
                     "headline": article_data.get("headline", ""),
-                    "article_content": article_data.get("article_content", ""),
+                    "article_content": article_data.get(
+                        "article_content", ""
+                    ),
                     "source": source_name
                 }
 
-                # Add to transformed data with numerical key
                 transformed_data[str(counter)] = transformed_article
+
                 counter += 1
 
-        print(f"\nTransformation complete!")
+        print("\nTransformation complete!")
         print(f"Total articles: {counter - 1}")
 
-        # Save the transformed data
         if output_json_file is None:
             output_json_file = input_json_file
 
         print(f"Saving transformed data to: {output_json_file}")
 
-        # Use FileUtils to create/update the file (creates file if it doesn't exist)
-        FileUtils.create_file(output_json_file, transformed_data)
+        FileUtils.create_file(
+            output_json_file,
+            transformed_data
+        )
 
         return transformed_data
 
     except Exception as e:
-        print(f"Error transforming news data: {str(e)}")
+
+        print(
+            f"Error transforming news data: {str(e)}"
+        )
+
         import traceback
         traceback.print_exc()
+
         return None
 
 
+# ============================================================
+# GET ARTICLE BY NUMBER
+# ============================================================
+
 def get_article_by_number(json_file, article_number):
     """
-    Get a specific article by its number from the transformed JSON.
+    Get a specific article by number.
 
     Args:
-        json_file (str): Path to the transformed JSON file
-        article_number (int or str): Article number to retrieve
+        json_file (str): Path to JSON file
+        article_number (int or str): Article number
 
     Returns:
-        dict: Article data or None if not found
-
-    Examples:
-        # Get article number 1
-        article = get_article_by_number('dumps/transformed.json', 1)
-        print(article['headline'])
+        dict: Article data or None
     """
+
     try:
+
         data = JsonUtil.read_json_content(json_file)
 
         if not data:
@@ -119,248 +149,516 @@ def get_article_by_number(json_file, article_number):
         article = data.get(str(article_number))
 
         if article:
-            print(f"Article {article_number} found from source: {article.get('source')}")
-            return article
-        else:
-            print(f"Article {article_number} not found")
-            return None
 
-    except Exception as e:
-        print(f"Error getting article: {str(e)}")
+            print(
+                f"Article {article_number} found "
+                f"from source: {article.get('source')}"
+            )
+
+            return article
+
+        print(
+            f"Article {article_number} not found."
+        )
+
         return None
 
+    except Exception as e:
+
+        print(
+            f"Error getting article: {str(e)}"
+        )
+
+        return None
+
+
+# ============================================================
+# GET ARTICLES BY SOURCE
+# ============================================================
 
 def get_articles_by_source(json_file, source_name):
     """
     Get all articles from a specific source.
 
     Args:
-        json_file (str): Path to the transformed JSON file
-        source_name (str): Source name (e.g., 'bbc', 'guardian', 'dw', 'cbc', 'apnews')
+        json_file (str): Path to JSON file
+        source_name (str): Source name
 
     Returns:
-        dict: Dictionary of articles from the specified source
-
-    Examples:
-        # Get all BBC articles
-        bbc_articles = get_articles_by_source('dumps/transformed.json', 'bbc')
+        dict: Articles belonging to source
     """
+
     try:
+
         data = JsonUtil.read_json_content(json_file)
 
         if not data:
             return {}
 
-        # Filter articles by source
         filtered_articles = {
-            key: article for key, article in data.items()
-            if article.get('source') == source_name
+            key: article
+            for key, article in data.items()
+            if article.get("source") == source_name
         }
 
-        print(f"Found {len(filtered_articles)} articles from {source_name}")
+        print(
+            f"Found {len(filtered_articles)} articles "
+            f"from {source_name}"
+        )
+
         return filtered_articles
 
     except Exception as e:
-        print(f"Error filtering articles: {str(e)}")
+
+        print(
+            f"Error filtering articles: {str(e)}"
+        )
+
         return {}
 
+
+# ============================================================
+# COUNT ARTICLES BY SOURCE
+# ============================================================
 
 def count_articles_by_source(json_file):
     """
     Count articles grouped by source.
 
     Args:
-        json_file (str): Path to the transformed JSON file
+        json_file (str): Path to JSON file
 
     Returns:
-        dict: Dictionary with source names as keys and article counts as values
-
-    Examples:
-        # Get article counts
-        counts = count_articles_by_source('dumps/transformed.json')
-        # Returns: {'bbc': 5, 'guardian': 6, 'dw': 4, 'cbc': 5, 'apnews': 5}
+        dict: Source names and article counts
     """
+
     try:
+
         data = JsonUtil.read_json_content(json_file)
 
         if not data:
             return {}
 
-        # Count articles by source
         counts = {}
-        for article in data.values():
-            source = article.get('source', 'unknown')
-            counts[source] = counts.get(source, 0) + 1
 
-        print("Article counts by source:")
+        for article in data.values():
+
+            source = article.get(
+                "source",
+                "unknown"
+            )
+
+            counts[source] = counts.get(
+                source,
+                0
+            ) + 1
+
+        print("\nArticle counts by source:")
+
         for source, count in counts.items():
-            print(f"  {source}: {count} articles")
+
+            print(
+                f"  {source}: {count} articles"
+            )
 
         return counts
 
     except Exception as e:
-        print(f"Error counting articles: {str(e)}")
+
+        print(
+            f"Error counting articles: {str(e)}"
+        )
+
         return {}
 
 
-def summarize_all_articles(json_file_path, model="llama3.2"):
+# ============================================================
+# SUMMARIZE ALL ARTICLES USING GROQ
+# ============================================================
+
+def summarize_all_articles(
+    json_file_path,
+    model=GROQ_MODEL,
+    api_key=None
+):
     """
-    Summarize all articles in a transformed JSON file and add summaries as a new key.
-    Uses Ollama (100% FREE - Runs locally, unlimited!).
+    Summarize all articles using Groq.
+
+    The generated summary is added to each article
+    under the "summary" key.
 
     Args:
-        json_file_path (str): Path to the transformed JSON file
-        model (str): Ollama model to use for summarization
-                     Default: "llama3.2"
-                     Other options: "llama3.1", "mistral", "gemma2", "qwen2.5"
+        json_file_path (str):
+            Path to transformed JSON file.
+
+        model (str):
+            Groq model to use.
+
+        api_key (str):
+            Optional Groq API key.
+            If not provided, summarizeUtil.py will
+            read GROQ_API_KEY from environment.
 
     Returns:
-        dict: Updated JSON data with summaries or None if failed
-
-    Examples:
-        from scripter.summarizer import summarize_all_articles
-
-        # Use default Llama model
-        updated_data = summarize_all_articles('dumps/2026_08_14_01_22_transformed.json')
-
-        # Use Mistral model
-        updated_data = summarize_all_articles('dumps/2026_08_14_01_22_transformed.json',
-                                              model='mistral')
+        dict: Updated JSON data
     """
-    try:
-        print("\n=== Article Summarization Started ===\n")
 
-        # Read the transformed JSON file
-        print(f"Reading JSON file: {json_file_path}")
-        data = JsonUtil.read_json_content(json_file_path)
+    try:
+
+        print("\n" + "=" * 80)
+        print("ARTICLE SUMMARIZATION STARTED")
+        print("=" * 80)
+
+        print(
+            f"\nGroq Model: {model}"
+        )
+
+        # ----------------------------------------------------
+        # Read JSON
+        # ----------------------------------------------------
+
+        print(
+            f"\nReading JSON file: {json_file_path}"
+        )
+
+        data = JsonUtil.read_json_content(
+            json_file_path
+        )
 
         if not data:
-            print("Failed to read JSON file or file is empty")
+
+            print(
+                "Failed to read JSON file "
+                "or file is empty."
+            )
+
             return None
 
         total_articles = len(data)
-        print(f"Total articles to summarize: {total_articles}\n")
+
+        print(
+            f"Total articles to summarize: "
+            f"{total_articles}\n"
+        )
 
         successful = 0
         failed = 0
 
-        # Iterate through each article and summarize
-        for article_id, article_data in data.items():
-            print(f"Processing article {article_id}/{total_articles}...")
-            print(f"  Headline: {article_data.get('headline', 'N/A')[:60]}...")
+        # ----------------------------------------------------
+        # Process every article
+        # ----------------------------------------------------
 
-            article_content = article_data.get('article_content', '')
+        for article_id, article_data in data.items():
+
+            print("-" * 80)
+
+            print(
+                f"Processing article "
+                f"{article_id}/{total_articles}"
+            )
+
+            headline = article_data.get(
+                "headline",
+                "N/A"
+            )
+
+            print(
+                f"Headline: {headline[:100]}"
+            )
+
+            article_content = article_data.get(
+                "article_content",
+                ""
+            )
+
+            # ------------------------------------------------
+            # Validate content
+            # ------------------------------------------------
 
             if not article_content:
-                print(f"  X No content found for article {article_id}\n")
-                article_data['summary'] = None
+
+                print(
+                    f"No article content found "
+                    f"for article {article_id}"
+                )
+
+                article_data["summary"] = None
+
                 failed += 1
+
                 continue
 
-            # Summarize the article using Ollama
-            summary = summarize_article_with_ollama(article_content, model=model)
+            print(
+                f"Article content length: "
+                f"{len(article_content)} characters"
+            )
+
+            # ------------------------------------------------
+            # Call Groq
+            # ------------------------------------------------
+
+            print(
+                f"Sending article {article_id} "
+                f"to Groq..."
+            )
+
+            summary = summarize_article_with_groq(
+                article_content,
+                api_key=api_key,
+                model=model
+            )
+
+            # ------------------------------------------------
+            # Handle response
+            # ------------------------------------------------
 
             if summary:
-                # Add summary to the article data
-                article_data['summary'] = summary
+
+                article_data["summary"] = summary
+
                 successful += 1
-                print(f"  ✓ Article {article_id} summarized successfully")
-                print(f"  Summary preview: {summary[:100]}...\n")
+
+                print(
+                    f"Article {article_id} "
+                    f"summarized successfully."
+                )
+
+                print(
+                    f"Summary preview: "
+                    f"{summary[:200]}..."
+                )
+
             else:
-                article_data['summary'] = None
+
+                article_data["summary"] = None
+
                 failed += 1
-                print(f"  X Failed to summarize article {article_id}\n")
 
-        # Save the updated data back to the file
-        print(f"Saving updated data with summaries to: {json_file_path}")
-        FileUtils.create_file(json_file_path, data)
+                print(
+                    f"Failed to summarize "
+                    f"article {article_id}"
+                )
 
-        print("\n=== Summarization Complete ===")
-        print(f"Successfully summarized: {successful}/{total_articles}")
-        print(f"Failed: {failed}/{total_articles}")
-        print("="*80 + "\n")
+        # ----------------------------------------------------
+        # Save updated JSON
+        # ----------------------------------------------------
+
+        print("\n" + "=" * 80)
+
+        print(
+            f"Saving updated data to: "
+            f"{json_file_path}"
+        )
+
+        FileUtils.create_file(
+            json_file_path,
+            data
+        )
+
+        # ----------------------------------------------------
+        # Final statistics
+        # ----------------------------------------------------
+
+        print("\n" + "=" * 80)
+        print("SUMMARIZATION COMPLETE")
+        print("=" * 80)
+
+        print(
+            f"Successfully summarized: "
+            f"{successful}/{total_articles}"
+        )
+
+        print(
+            f"Failed: "
+            f"{failed}/{total_articles}"
+        )
+
+        print(
+            f"Groq Model Used: {model}"
+        )
+
+        print("=" * 80 + "\n")
 
         return data
 
     except Exception as e:
-        print(f"Error summarizing articles: {str(e)}")
+
+        print(
+            f"Error summarizing articles: "
+            f"{str(e)}"
+        )
+
         import traceback
         traceback.print_exc()
+
         return None
 
 
-def process_and_transform_json(input_json_file, output_json_file, summarize=False):
+# ============================================================
+# PROCESS + TRANSFORM + SUMMARIZE
+# ============================================================
+
+def process_and_transform_json(
+    input_json_file,
+    output_json_file,
+    model=GROQ_MODEL,
+    api_key=None
+):
     """
-    Reusable function to process and transform a JSON file.
-    Transforms the file and optionally summarizes all articles.
+    Transform a JSON file and summarize all articles
+    using Groq.
 
     Args:
-        input_json_file (str): Path to the input JSON file
-        output_json_file (str): Path to save the transformed JSON file
-        summarize (bool): Whether to summarize articles after transformation (default: False)
+        input_json_file (str):
+            Original JSON file.
+
+        output_json_file (str):
+            Transformed JSON file.
+
+        model (str):
+            Groq model to use.
+
+        api_key (str):
+            Optional Groq API key.
 
     Returns:
-        dict: Transformed news data or None if failed
-
-    Examples:
-        # From Driver.py or any other file:
-        from scripter.summarizer import process_and_transform_json
-
-        # Transform only
-        transformed = process_and_transform_json('dumps/2026_08_14_01_22.json',
-                                                 'dumps/2026_08_14_01_22_transformed.json')
-
-        # Transform and summarize
-        transformed = process_and_transform_json('dumps/2026_08_14_01_22.json',
-                                                 'dumps/2026_08_14_01_22_transformed.json',
-                                                 summarize=True)
+        dict: Processed news data
     """
+
     try:
-        print("=== News Data Transformer ===\n")
 
-        # Transform the data
-        transformed = transform_news_data(input_json_file, output_json_file)
+        print("\n" + "=" * 80)
+        print("NEWS DATA PROCESSOR")
+        print("=" * 80)
 
-        if transformed:
-            print("\n--- Sample Transformed Data ---")
-            # Show first 2 articles
-            for i in range(1, min(3, len(transformed) + 1)):
-                article = transformed.get(str(i))
-                if article:
-                    print(f"\nArticle {i}:")
-                    print(f"  Source: {article['source']}")
-                    print(f"  Headline: {article['headline'][:80]}...")
-                    print(f"  Content length: {len(article['article_content'])} characters")
+        # ----------------------------------------------------
+        # Transform
+        # ----------------------------------------------------
 
-            # Count articles by source
-            print("\n--- Article Statistics ---")
-            counts = count_articles_by_source(output_json_file)
+        transformed = transform_news_data(
+            input_json_file,
+            output_json_file
+        )
 
-            print("\n=== Transformation Complete ===\n")
+        if not transformed:
 
-            # Summarize articles if requested
-            if summarize:
-                print("Summarization requested. Starting summarization process...\n")
-                updated_data = summarize_all_articles(output_json_file)
-                return updated_data
+            print(
+                "\nTransformation failed."
+            )
 
-            return transformed
-        else:
-            print("\n=== Transformation Failed ===\n")
             return None
 
+        # ----------------------------------------------------
+        # Show sample data
+        # ----------------------------------------------------
+
+        print(
+            "\n--- Sample Transformed Data ---"
+        )
+
+        for i in range(
+            1,
+            min(3, len(transformed) + 1)
+        ):
+
+            article = transformed.get(
+                str(i)
+            )
+
+            if article:
+
+                print(
+                    f"\nArticle {i}:"
+                )
+
+                print(
+                    f"  Source: "
+                    f"{article['source']}"
+                )
+
+                print(
+                    f"  Headline: "
+                    f"{article['headline'][:80]}..."
+                )
+
+                print(
+                    f"  Content length: "
+                    f"{len(article['article_content'])} "
+                    f"characters"
+                )
+
+        # ----------------------------------------------------
+        # Statistics
+        # ----------------------------------------------------
+
+        print(
+            "\n--- Article Statistics ---"
+        )
+
+        count_articles_by_source(
+            output_json_file
+        )
+
+        print(
+            "\n=== Transformation Complete ===\n"
+        )
+
+        # ----------------------------------------------------
+        # Summarization
+        # ----------------------------------------------------
+
+        print(
+            "Summarization enabled."
+        )
+
+        print(
+            f"Using Groq model: {model}\n"
+        )
+
+        return summarize_all_articles(
+            output_json_file,
+            model=model,
+            api_key=api_key
+        )
+
     except Exception as e:
-        print(f"Error in process_and_transform_json: {str(e)}")
+
+        print(
+            f"Error in process_and_transform_json: "
+            f"{str(e)}"
+        )
+
         import traceback
         traceback.print_exc()
+
         return None
 
 
-# Example usage
-if __name__ == "__main__":
-    # Example: Transform a JSON file
-    input_file = "dumps/2026_08_14_00_56.json"
-    output_file = "dumps/2026_08_14_00_56_transformed.json"
+# ============================================================
+# MAIN
+# ============================================================
 
-    # Use the reusable function with summarization
-    process_and_transform_json(input_file, output_file, summarize=False)
+if __name__ == "__main__":
+
+    # --------------------------------------------------------
+    # Input / Output files
+    # --------------------------------------------------------
+
+    input_file = (
+        "dumps/2026_09_19_13_32.json"
+    )
+
+    output_file = (
+        "dumps/2026_09_19_13_32_transformed_1.json"
+    )
+
+    # --------------------------------------------------------
+    # Process + Summarize
+    # --------------------------------------------------------
+
+    process_and_transform_json(
+        input_json_file=input_file,
+        output_json_file=output_file,
+        # Explicitly select Groq model
+        model="qwen/qwen3.8-27b"
+    )

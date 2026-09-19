@@ -4,9 +4,13 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 .env
+youtubeUtil/token.json
 package-lock.json
 *.log
 .DS_Store
 /dumps/generated_audios/
 /dumps/generated_images/
 /dumps/generated_videos/
+__pycache__/Driver.cpython-311.pyc
+.vscode/
+/util/youtubeUtil/client_secret.json
