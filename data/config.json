@@ -1,0 +1,6 @@
+{
+  "scraper_settings": {
+    "time_limit_hours": 6,
+    "include_minutes_ago": true
+  }
+}

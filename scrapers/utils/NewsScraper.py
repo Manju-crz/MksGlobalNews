@@ -48,7 +48,7 @@ class NewsScraper:
         print("\n" + "="*80)
         print("SCRAPING AP NEWS")
         print("="*80)
-        apnews_data = scrape_apnews(headless=self.headless)
+        #apnews_data = scrape_apnews(headless=self.headless)
 
         # Combine all data
         self.all_news_data = {
@@ -56,7 +56,7 @@ class NewsScraper:
             'guardian': guardian_data,
             'dw': dw_data,
             'cbc': cbc_data,
-            'apnews': apnews_data
+            #'apnews': apnews_data
         }
 
         # Calculate statistics
@@ -70,14 +70,6 @@ class NewsScraper:
         print("SCRAPING COMPLETED")
         print("="*80)
         print(f"Total articles collected: {total_articles}")
-        print(f"  - BBC: {len(bbc_data)} articles")
-        print(f"  - Guardian: {len(guardian_data)} articles")
-        print(f"  - DW: {len(dw_data)} articles")
-        print(f"  - CBC: {len(cbc_data)} articles")
-        print(f"  - AP News: {len(apnews_data)} articles")
-        print(f"Time taken: {duration:.2f} seconds")
-        print("="*80)
-
         return self.all_news_data
 
     def save_to_json(self, filename='news_data.json'):
@@ -101,19 +93,18 @@ class NewsScraper:
         """Return the scraped data dictionary"""
         return self.all_news_data
 
-    def run_scraper_and_save(self, save_file=True, show_sample=True):
+    def run_scraper_and_save(self, filename):
         """
-        Reusable function to run the scraper and optionally save results.
+        Reusable function to run the scraper and save results.
         This can be called from other Python files.
 
         Args:
-            save_file (bool): Whether to save the scraped data to JSON file (default: True)
-            show_sample (bool): Whether to print sample data to console (default: True)
+            filename (str): Name of the JSON file to save the scraped data
 
         Returns:
             tuple: (news_data, filename) where:
                 - news_data (dict): Scraped news data from all sources
-                - filename (str): Generated JSON filename (or None if not saved)
+                - filename (str): Full path to the saved JSON file
 
         Examples:
             # From another Python file:
@@ -121,68 +112,45 @@ class NewsScraper:
 
             # Run scraper and save
             scraper = NewsScraper(headless=True)
-            data, filename = scraper.run_scraper_and_save()
-
-            # Run scraper without saving
-            data, filename = scraper.run_scraper_and_save(save_file=False)
+            data, filename = scraper.run_scraper_and_save("news_data.json")
         """
-        try:
-            # Scrape all news sources
-            all_news = self.scrape_all()
+        # Scrape all news sources
+        all_news = self.scrape_all()
+        # Save to JSON file with the provided filename
+        self.save_to_json(filename)
 
-            saved_filename = None
+        # Store the full path for return
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        dumps_folder = os.path.join(project_root, 'dumps')
+        saved_filename = os.path.join(dumps_folder, filename)
 
-            # Save to JSON file if requested
-            if save_file:
-                # Generate timestamped filename using DateTimeUtil
-                timestamp = DateTimeUtil.get_timestamp_string()
-                filename = f"{timestamp}.json"
+        # Print sample data
+        print("\n" + "="*80)
+        print("SAMPLE DATA")
+        print("="*80)
+        for source, articles in all_news.items():
+            print(f"\n{source.upper()}:")
+            for card_key, card_data in list(articles.items())[:2]:  # Show first 2 articles from each source
+                print(f"  {card_key}:")
+                print(f"    Headline: {card_data.get('headline', 'N/A')[:80]}...")
+                print(f"    Paragraphs: {card_data.get('paragraph_count', 0)}")
 
-                # Save to JSON file with timestamp
-                self.save_to_json(filename)
-
-                # Store the full path for return
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                project_root = os.path.dirname(os.path.dirname(current_dir))
-                dumps_folder = os.path.join(project_root, 'dumps')
-                saved_filename = os.path.join(dumps_folder, filename)
-
-            # Print sample data if requested
-            if show_sample:
-                print("\n" + "="*80)
-                print("SAMPLE DATA")
-                print("="*80)
-                for source, articles in all_news.items():
-                    print(f"\n{source.upper()}:")
-                    for card_key, card_data in list(articles.items())[:2]:  # Show first 2 articles from each source
-                        print(f"  {card_key}:")
-                        print(f"    Headline: {card_data.get('headline', 'N/A')[:80]}...")
-                        print(f"    Paragraphs: {card_data.get('paragraph_count', 0)}")
-
-            return all_news, saved_filename
-
-        except KeyboardInterrupt:
-            print("\n\nScraping interrupted by user.")
-            return None, None
-        except Exception as e:
-            print(f"Error in run_scraper_and_save: {str(e)}")
-            return None, None
+        return all_news
 
 
-def run_news_scraper(headless=False, save_file=True, show_sample=True):
+def run_news_scraper(headless=False, filename=None):
     """
     Standalone reusable function to run the news scraper.
     Can be called from any Python file without creating a class instance.
 
     Args:
         headless (bool): Run browser in headless mode (default: False)
-        save_file (bool): Whether to save the scraped data to JSON file (default: True)
-        show_sample (bool): Whether to print sample data to console (default: True)
 
     Returns:
         tuple: (news_data, filename) where:
             - news_data (dict): Scraped news data from all sources
-            - filename (str): Full path to generated JSON file (or None if not saved)
+            - filename (str): Full path to generated JSON file
 
     Examples:
         # From another Python file:
@@ -194,22 +162,16 @@ def run_news_scraper(headless=False, save_file=True, show_sample=True):
 
         # Run scraper in background (headless mode)
         data, filename = run_news_scraper(headless=True)
-
-        # Run scraper without saving
-        data, filename = run_news_scraper(headless=True, save_file=False)
-        # filename will be None
     """
+    # Generate timestamped filename using DateTimeUtil
     scraper = NewsScraper(headless=headless)
-    return scraper.run_scraper_and_save(
-        save_file=save_file,
-        show_sample=show_sample
-    )
+    return scraper.run_scraper_and_save(filename)
 
 
 def main():
     """Main function to run the news scraper when executed directly"""
     # Use the reusable function
-    run_news_scraper(headless=False, save_file=True, show_sample=True)
+    run_news_scraper(headless=False)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+
+
+1. scriptEditor.py Instead of having the huge SYSTEM_PROMPT duplicated as a Python string and relying on caching, you could investigate OpenAI's prompt/caching mechanisms
+2. process_and_transform_json method does summarization as well, but the Groq open source model giving limitation issue and hence simply continuing sometimes by setting summary to null
+
+

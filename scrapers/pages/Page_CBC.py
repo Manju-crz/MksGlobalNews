@@ -1,5 +1,11 @@
 import re
+import sys
+import os
 from utils.common_utils import CommonUtils
+
+# Add parent directory to path for config utility
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from util.configUtil import ConfigUtil
 
 
 class CBCPage:
@@ -55,12 +61,16 @@ class CBCPage:
 
         mins_match = re.search(mins_pattern, time_text)
         if mins_match:
-            return True
+            if ConfigUtil.should_include_minutes_ago():
+                return True
+            else:
+                return False
 
         hrs_match = re.search(hrs_pattern, time_text)
         if hrs_match:
             hours = int(hrs_match.group(1))
-            if hours <= 6:
+            time_limit = ConfigUtil.get_time_limit_hours()
+            if hours <= time_limit:
                 return True
 
         return False

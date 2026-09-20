@@ -328,9 +328,73 @@ def _generate_openai_image(
 
     except Exception as e:
 
+        error_message = str(e)
         print(
-            f"❌ Error generating image with OpenAI: {str(e)}"
+            f"❌ Error generating image with OpenAI: {error_message}"
         )
+
+        # Check if this is a safety/content policy rejection
+        if "safety" in error_message.lower() or "moderation" in error_message.lower() or "rejected" in error_message.lower():
+            print("🔄 Safety rejection detected - generating safe alternative image...")
+            
+            # Create a safe, generic news-related prompt
+            safe_prompt = "Professional news broadcast studio background with neutral colors, suitable for news content presentation"
+            
+            try:
+                print(f"📄 Safe alternative prompt: {safe_prompt}")
+                
+                result = client.images.generate(
+                    model=OPENAI_MODEL,
+                    prompt=safe_prompt,
+                    size=OPENAI_GENERATION_SIZE,
+                    quality=IMAGE_QUALITY,
+                    output_format="png",
+                    n=1
+                )
+
+                if not result.data:
+                    print("❌ Safe alternative generation failed - no image data returned.")
+                    return None
+
+                image_base64 = result.data[0].b64_json
+
+                if not image_base64:
+                    print("❌ Safe alternative generation failed - empty image data.")
+                    return None
+
+                # Process the safe alternative image
+                image_bytes = base64.b64decode(image_base64)
+                temporary_path = output_path.replace(".png", "_safe.png")
+
+                with open(temporary_path, "wb") as image_file:
+                    image_file.write(image_bytes)
+
+                print("✅ Safe alternative image generated successfully!")
+
+                image = Image.open(temporary_path)
+                print(f"📐 Safe image dimensions: {image.width}x{image.height}")
+
+                image_16_9 = _crop_to_16_9(image)
+
+                if image_16_9.mode not in ("RGB", "RGBA"):
+                    image_16_9 = image_16_9.convert("RGB")
+
+                image_16_9.save(output_path, format="PNG")
+
+                try:
+                    os.remove(temporary_path)
+                except OSError:
+                    pass
+
+                print(
+                    f"✅ Safe alternative 16:9 image saved to: {output_path}"
+                )
+
+                return output_path
+
+            except Exception as safe_error:
+                print(f"❌ Safe alternative generation also failed: {str(safe_error)}")
+                return None
 
         return None
 

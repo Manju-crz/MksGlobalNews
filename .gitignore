@@ -14,3 +14,4 @@ package-lock.json
 __pycache__/Driver.cpython-311.pyc
 .vscode/
 /util/youtubeUtil/client_secret.json
+util/youtubeUtil/token.json

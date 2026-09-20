@@ -543,7 +543,6 @@ def save_script(script, output_file="generated_news_script.txt"):
 
     return output_path
 
-
 # ============================================================
 # MAIN
 # ============================================================
@@ -551,55 +550,61 @@ def save_script(script, output_file="generated_news_script.txt"):
 if __name__ == "__main__":
 
     # --------------------------------------------------------
-    # PUT YOUR ARTICLE CONTENT HERE
-    # --------------------------------------------------------
-    #
-    # You can provide one article:
-    #
-    # article_1 = """..."""
-    #
-    # Or multiple articles:
-    #
-    # article_1 = """..."""
-    # article_2 = """..."""
-    # article_3 = """..."""
-    #
-    # The model will consolidate all of them.
+    # ARTICLE CONTENT
     # --------------------------------------------------------
 
     article_1 = """
+US President Donald Trump has announced that he is \"immediately\" banning CNN, MS NOW and Politico from the White House, the latest twist in his fraught relationship with media outlets.\n\nIn a post on Truth Social on Friday, Trump said that the outlets \"constantly write or report fiction or lies\" about his administration, although he provided no examples.\n\nTrump later called it a \"very simple ban\", but did not explain how it would work. It is unclear whether employees of those outlets would be prevented from entering the White House grounds.\n\nCNN swiftly slammed the move as an \"illegal assault\" on American press freedoms. The move by Trump is likely to be met with legal challenges.\n\nReporters from both Politico and CNN were still on the White House grounds shortly after the announcement was made.\n\nA crew from CNN was also travelling with Vice-President JD Vance to and from an event in Iowa.\n\nIn a statement, the network called a potential ban illegal and said it \"stands fully behind our White House team and their fair and accurate reporting\".\n\n\"We have a right under the US Constitution to do that reporting without hindrance or interference from the government,\" the CNN statement said. \"Should the ban which President Trump threatened go ahead, it would be an illegal assault on that fundamental and constitutionally-protected right.\"\n\nPolitico also released a statement, saying it would \"continue to fairly report on this White House and future ones.\n\n\"We will vigorously defend our First Amendment rights against any attempt to restrict them.\"\n\nMS NOW, formerly MSNBC, declined to comment.\n\nTrump had said in his post: \"Media outlets shouldn't be able to constantly write or report fiction and lies when they're covering the President of the United States, the Trump Administration or the United States of America. Other news outlets to follow.\"\n\nThe post did not mention specific stories or reporting that prompted the move.\n\nAsked by a reporter what he meant by others to come, Trump responded: \"Others to come in terms of fake news? Well, you know, the New York Times is fake news, the Washington Post is fake news.\"\n\nThe White House Correspondents' Association President Jacqui Heinrich said it stood in \"defence\" of its colleagues who were \"being singled out for doing their jobs\".\n\n\"This is about more than the rights of journalists,\" Heinrich, who works for Fox News, also said. \"It is about the right of the American people to receive a full and independent account of the activities, policies and decisions of whoever occupies the nation's highest office.\"\n\nAsked about the ban later in the Oval Office, Trump said that there was \"no reason\" for the announcement being made on Friday afternoon.\n\n\"It's really just cumulative stories over the last few years,\" he said. \"You get sick of it.\"\n\nTrump added that there \"may be others to join them\", but did not name any specific news outlets.\n\nHe also acknowledged that legal challenges may follow his announcement, saying \"I think it's good to point it out, whether it survives or doesn't\".\n\nSince returning to office in January 2025, Trump and administration officials have repeatedly clashed with members of the White House press corps. In his second term, Trump has also moved to bring conservative bloggers, influencers and other media into the press room, arguing it is necessary to provide diverse perspectives to the American public.\n\nIn February, the White House announced it was taking control of the press pool which has access to Trump and had for more than a century been managed by the White House Correspondents' Association.\n\nThe same month, the administration moved to bar Associated Press (AP) reporters and photographers from spaces where access is limited, such as the Oval Office or Air Force One, because of the outlet's usage of the term \"Gulf of Mexico\" instead of \"Gulf of America\".\n\nAP swiftly filed a lawsuit and the case remains ongoing.\n\nThe president has frequently clashed with reporters in the Oval Office on Air Force One and during White House events, often referring to them as \"fake news\" and \"rude\".\n\nIn his first term, Trump also banned CNN correspondent Jim Acosta from the White House, although his credentials were restored after CNN sued.\n\nCNN is one of only five US news outlets that film video for the pool. The pool refers to an outlet or reporter sharing material from a presidential event with other media outlets. The BBC contributes to the White House radio pool.\n\nThe announcement was immediately criticised by leading advocacy organisations for freedom of the press.\n\nIn a statement on Friday afternoon, the Knight First Amendment Institute at Columbia University said that \"with so many courts having ruled against him on exactly this point, you'd think President Trump would have learned this lesson by now\".\n\n\"If President Trump means to expel these news organizations from the White House press pool, his action is doubly unconstitutional because the press pool is a 'public forum' under the First Amendment, which means the president can't exclude journalists from it on the basis of their viewpoints,\" said the institute's executive director, Jameel Jaffer.\n\nA major group that provides legal services to the media - the Reporters Committee for Freedom of the Press - said it expected Trump's ban to be struck down quickly by the courts because it was \"flatly unconstitutional\".\n\n\"The First Amendment is clear that once the White House invites in some journalists, it can't ban others because it doesn't like their reporting,\" said the group's president Bruce Brown, calling the potential ban \"textbook viewpoint discrimination\".\n\nThe Freedom of the Press Foundation also said it was illegal, adding: \"It's also hard to imagine a dumber move\".\n\nTrump \"has been retaliating against the press for years, but it hasn't helped him,\" it said, saying \"these outrageous attacks only demonstrate how scared he is of an informed public\".\n\nTrump has pursued legal action against a number of US and international news outlets, including The Wall Street Journal, The New York Times and the BBC.\n\nSome of the lawsuits have resulted in media organisations agreeing to pay multimillion dollar settlements. Trump's lawsuit against the BBC is ongoing.
+"""
+
+    article_2 = """
+Canadian Prime Minister Mark Carney used a speech at the European Parliament to promote deeper cooperation with the European Union.\n\nHis appearance came a day after European Commission President Ursula von der Leyen suggested Canada could become an associate member of the EU. Speaking Thursday, Carney outlined the benefits of closer cooperation between Canada and the bloc.\n\nMeanwhile, US President Donald Trump has already voiced opposition to the idea.\n\n\"I think it's laughable,\" Trump said. \"Canada's been a terrible trade partner [...] And if they do that, if I think it's at all a hostile act, I will put very serious tariffs or stop trading with Europe on many things.\"\n\nAbigail Hall, an economics professor at the University of Tampa, shares her insights about Trump's response to the EU-Canada plan.
+"""
+
+    article_3 = """
 US President Donald Trump signed into law a package of new sanctions against Russia named after the late Senator Lindsey Graham, the White House said on Friday.\n\nEarlier, the bill passed Congress with large bipartisan majorities: 86-11 in the Senate and 262-159 in the House.\n\nThe comprehensive sanctions package is intended to punish and pressure Moscow for its ongoing war against Ukraine.\n\nIn addition to the sanctions on Russia, the law establishes a framework to maintain sanctions on Iran until 2031.\n\nThe bill targets Russian officials and key sectors of the Russian economy, including banks, and a fleet of shadow tankers that transport Russian energy.\n\nIt also instructs Trump to impose tariffs of up to 100% on the top five importers of Russian oil or natural gas. However, some countries are exempt.\n\nThe US president can also impose sanctions on the five countries that do the most to help Russia circumvent energy sanctions.\n\nThese measures could further strain US trade relations with China and India, both of which buy significant amounts of Russian oil.\n\nTo view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video\n\nUkrainian President Volodymyr Zelenskyy thanked Trump for signing the bill, as well as all the senators and members of the House of Representatives who supported it.\n\n\"When Lindsey Graham was here in Ukraine, he would always talk about how important it was not to ease pressure on Russia, to strengthen sanctions and seek a path to peace,\" he wrote on X.\n\nGraham, who played a leading role in advancing the bill, was a staunch supporter of Ukraine. The senator had just returned from Ukraine when he unexpectedly passed away in July.\n\n\"The best way to honor Lindsey's memory will be to implement the provisions of this law fully and swiftly. And the best reward for everyone helping us put pressure on Russia to end its war will be peace,\" Zelenskyy added.\n\nBefore Trump signed the bill, Kremlin spokesman Dmitry Peskov warned that additional US sanctions would hinder efforts to achieve a peaceful resolution in Ukraine.\n\nEdited by: Sean Sinico\n\nDon't let the algorithm hide the news. If you rely on our team for trusted reporting, please take a moment to select us as your Preferred Source on Google by clicking here and hitting the \"star\" or \"preferred\" button, so you'll always see our verified news first.
 """
-    article_2 = """
-U.S. President Donald Trump said Friday he has a deal with Denmark to bolster the U.S. military presence in Greenland after months of threatening to take island by force from the NATO ally.\n\nTrump in a social media post announcing the deal said the agreement \"gives the United States permanent control over security, and all other needs, in Greenland, completely addressing ALL of our many U.S. concerns.\"\n\nHe added that with the agreement his administration would \"immediately\" begin the process of developing a larger military presence on the mineral-rich Danish territory.\n\nThe office of Denmark's prime minister, Mette Frederiksen, said the deal will be signed by three governments next week during the United Nations General Assembly, but parliamentary action is still needed by the Danish and Greenland governments before it can be enforced.\n\nIn a statement she said \"the agreement recognizes the sovereignty and territorial integrity\" of Greenland and Denmark and upholds both people's right \"to self-determination.\"\n\nWith his return to the White House last year, Trump called on Denmark to sell the island to the United States, while insisting that Greenland is crucial for U.S. security. He pointedly wouldn't rule out taking the island by military force, even though Denmark is a NATO ally of the U.S.\n\nCanada's top general is up for a senior NATO post. Will Trump get in her way?\n\nTrump leaves NATO united on paper, uncertain in practice\n\nDenmark and Greenland repeatedly said the island is not for sale and condemned reports of the U.S. gathering intelligence there. The U.S. push for Greenland is also opposed by Russia and much of Europe.\n\nBut Trump in his social media post Friday suggested an understanding may have been reached that could bring an end to what was viewed as an existential crisis by Denmark.\n\n\"We look forward to working with the wonderful people of Denmark and Greenland toward a magnificent future with respect to this large, and highly strategic, parcel of land,\" Trump said in his post. \"We will be very protective of it!\
+
+    article_4 = """
+U.S. President Donald Trump said Friday he has a deal with Denmark to bolster the U.S. military presence in Greenland after months of threatening to take island by force from the NATO ally.\n\nTrump in a social media post announcing the deal said the agreement \"gives the United States permanent control over security, and all other needs, in Greenland, completely addressing ALL of our many U.S. concerns.\"\n\nHe added that with the agreement his administration would \"immediately\" begin the process of developing a larger military presence on the mineral-rich Danish territory.\n\nThe office of Denmark's prime minister, Mette Frederiksen, said the deal will be signed by three governments next week during the United Nations General Assembly, but parliamentary action is still needed by the Danish and Greenland governments before it can be enforced.\n\nIn a statement she said \"the agreement recognizes the sovereignty and territorial integrity\" of Greenland and Denmark and upholds both people's right \"to self-determination.\"\n\nWith his return to the White House last year, Trump called on Denmark to sell the island to the United States, while insisting that Greenland is crucial for U.S. security. He pointedly wouldn't rule out taking the island by military force, even though Denmark is a NATO ally of the U.S.\n\nCanada's top general is up for a senior NATO post. Will Trump get in her way?\n\nTrump leaves NATO united on paper, uncertain in practice\n\nDenmark and Greenland repeatedly said the island is not for sale and condemned reports of the U.S. gathering intelligence there. The U.S. push for Greenland is also opposed by Russia and much of Europe.\n\nBut Trump in his social media post Friday suggested an understanding may have been reached that could bring an end to what was viewed as an existential crisis by Denmark.\n\n\"We look forward to working with the wonderful people of Denmark and Greenland toward a magnificent future with respect to this large, and highly strategic, parcel of land,\" Trump said in his post. \"We will be very protective of it!\"
 """
 
-    # Add more articles if required:
-    #
-    # article_3 = """PASTE THIRD ARTICLE HERE."""
-    #
-    # Then include it below.
-
-    articles = [
+    articlelist1 = [
         article_1,
         article_2,
-        # article_3,
     ]
 
-    try:
+    articlelist2 = [
+        article_1,
+        article_2,
+        article_3,
+    ]
 
-        final_script = generate_news_script(articles)
-        print("FINAL SCRIPT")
-        print()
-        print(final_script)
-        print()
+    articlelist3 = [
+        article_1,
+    ]
 
-    except Exception as error:
-        print()
-        print("=" * 70)
-        print("ERROR")
-        print("=" * 70)
-        print()
-        print(str(error))
-        print()
-        sys.exit(1)
+    articlelist4 = [
+        article_2,
+        article_4,
+    ]
+
+    all_article_lists = [
+        articlelist1,
+        articlelist2,
+        articlelist3,
+        articlelist4,
+    ]
+
+    for index, article_list in enumerate(all_article_lists, start=1):
+        try:
+            final_script = generate_news_script(article_list)
+            print(f"FINAL SCRIPT at {index}")
+            print(f"Length of final_script: {len(final_script)} characters")
+            print(final_script)
+            print()
+        except Exception as error:
+            print(str(error))
+            print()
+            continue
+
